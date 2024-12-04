@@ -1,5 +1,5 @@
-import jwt from 'jsonwebtoken'
-import crypto from 'node:crypto'
+import jwt from "jsonwebtoken";
+import crypto from "node:crypto";
 
 const exampleBook = {
   id: crypto.randomUUID(),
@@ -22,8 +22,12 @@ function getAllBooks(req, res) {
 function addBook(req, res) {
   // add new book
   const newBook = req.body;
+  const newId = crypto.randomUUID();
 
-  books.push(newBook);
+  books.push({
+    id: newId,
+    ...newBook,
+  });
 
   res.send({
     message: "New Book Added",
@@ -53,9 +57,10 @@ const updateBook = (req, res) => {
   book.author = req.body.author || book.author;
   book.published_year = req.body.published_year || book.published_year;
   book.genre = req.body.genre || book.genre;
-  book.genre = req.body.genre || book.genre;
-  res.json(book);
-}
+  book.available_copies = req.body.available_copies || book.available_copies;
+  console.log(book)
+  return res.json(book);
+};
 
 const deleteBook = (req, res) => {
   const id = req.params.id;
@@ -65,25 +70,25 @@ const deleteBook = (req, res) => {
   }
   books.splice(index, 1);
   res.status(204).send();
-}
+};
 
 // Managing Users
 
 const registerUser = (req, res) => {
-    const { name, email, membership_type, passwd } = req.body;
-    console.log(name, email, membership_type, passwd)
-    
-    if (users.find((u) => u.email === email)) {
-        // check if the user exists
-        return res.status(400).json({
-            error: "User already Exists",
-        });
-    } else {
-        // generate new id and set date
-        const id = crypto.randomUUID();
-        const date = new Date().getDate();
-        
-        const salt = crypto.randomBytes(16).toString("hex");
+  const { name, email, membership_type, passwd } = req.body;
+  console.log(name, email, membership_type, passwd);
+
+  if (users.find((u) => u.email === email)) {
+    // check if the user exists
+    return res.status(400).json({
+      error: "User already Exists",
+    });
+  } else {
+    // generate new id and set date
+    const id = crypto.randomUUID();
+    const date = new Date().getDate();
+
+    const salt = crypto.randomBytes(16).toString("hex");
     const passHash = crypto
       .pbkdf2Sync(passwd, salt, 1000, 64, "sha512")
       .toString("hex");
@@ -99,35 +104,57 @@ const registerUser = (req, res) => {
     };
 
     users.push(dbDoc);
-
-    let token;
-    try {
-      token = jwt.sign(
-        {
-          userId: id,
-          email,
-        },
-        salt,
-        { expiresIn: "5h" }
-      );
-    } catch (err) {
-      const error = new Error("Error! Something went wrong.");
-      return next(error);
-    }
-    res.status(201).json({
-      success: true,
-      data: {
-        userId: id,
-        email: email,
-        token: token,
-      },
-    });
+    return res.status(200).json({
+      id,
+      name,
+      email,
+    })
   }
-}
+};
 
-const getUser = (req, res) => {}
+const getUser = (req, res) => {};
 
-const loginUser = (req, res) => {}
+const loginUser = (req, res, next) => {
+  const { emailid, passwd } = req.body;
+  
+
+  for (let user of users) {
+    if (user.email == emailid) {
+      const salt = user.salt;
+      const userPassHash = crypto
+        .pbkdf2Sync(passwd, salt, 1000, 64, 'sha512')
+        .toString("hex");
+      // console.log(user.passHash)
+      if (userPassHash == user.passHash) {
+        console.log("password correct")
+        let token;
+        try {
+          token = jwt.sign(
+            {
+              userId: user.id,
+              emailid,
+            },
+            process.env.SECRET_KEY,
+            { expiresIn: "5h" }
+          );
+        } catch (err) {
+          const error = new Error("Error! Something went wrong.");
+          return next(error);
+        }
+        res.status(201).json({
+          success: true,
+          data: {
+            userId: user.id,
+            email: emailid,
+            token: token,
+          },
+        });
+      } else {
+        return res.status(400).json({ error: "User not found" });
+      }
+    }
+  }
+};
 
 // app.get("/api/auth/register", (req, res) => {});
 // app.get("/api/auth/login", (req, res) => {});
