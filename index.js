@@ -17,7 +17,7 @@ const verifyToken = (req, res, next) => {
   const token = req.headers['authorization']
   const idToken = token.split(' ')[1]
   if(token) {
-    jwt.verify(idToken, 'myscretkey', (err, decoded) => {
+    jwt.verify(idToken, process.env.SECRET_KEY, (err, decoded) => {
     if(err) {
          return res.status(400).send('Session expired')
     }
@@ -26,12 +26,6 @@ const verifyToken = (req, res, next) => {
 }
 
 };
-
-
-
-app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
 
 app.get('/api/books', getAllBooks)
 
@@ -50,5 +44,5 @@ app.post('/api/auth/login', jsonParser, loginUser)
 app.post('/api/auth/register', jsonParser, registerUser);
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Server started at port ${port}`)
 })
