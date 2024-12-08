@@ -34,7 +34,7 @@ function addBook(req, res) {
   });
 }
 
-function getBook(req, res) {
+const getBook = (req, res) => {
   const bookId = req.params.id;
   let bookNotFound = true;
 
@@ -58,7 +58,7 @@ const updateBook = (req, res) => {
   book.published_year = req.body.published_year || book.published_year;
   book.genre = req.body.genre || book.genre;
   book.available_copies = req.body.available_copies || book.available_copies;
-  console.log(book)
+  //console.log(book)
   return res.json(book);
 };
 
@@ -76,7 +76,7 @@ const deleteBook = (req, res) => {
 
 const registerUser = (req, res) => {
   const { name, email, membership_type, passwd } = req.body;
-  console.log(name, email, membership_type, passwd);
+  //console.log(name, email, membership_type, passwd);
 
   if (users.find((u) => u.email === email)) {
     // check if the user exists
@@ -126,7 +126,7 @@ const loginUser = (req, res, next) => {
         .toString("hex");
       // console.log(user.passHash)
       if (userPassHash == user.passHash) {
-        console.log("password correct")
+        //console.log("password correct")
         let token;
         try {
           token = jwt.sign(
